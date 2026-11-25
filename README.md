@@ -156,7 +156,7 @@ The captions were written by **Gemma 3 running locally**, from frames of each re
 </tr>
 </table>
 
-## 🥽 Immersive VR mode, built for Meta Quest 3
+## 🥽 Immersive VR mode, built for Meta Quest 3 and 3s
 
 <table>
 <tr>
