@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Settings &middot; {{ user.ai_name }}{% endblock %}
+{% block body %}
+<div class="max-w-5xl mx-auto px-4 pt-6 pb-10">
+  <header class="glass rounded-full h-14 px-3 pl-4 flex items-center gap-3">
+    <a href="/app" class="btn-plain btn-sm no-underline">&larr; Back to {{ user.ai_name }}</a>
+    <h1 class="font-semibold">Settings</h1>
+    <span class="ml-auto"></span>
+    <a href="/" class="btn-plain btn-icon no-underline" title="Home page" aria-label="Home page">{{ icon('home', 'w-5 h-5') }}</a>
+    <button class="btn-plain btn-icon relative" data-status-open title="System status" aria-label="System status">
+      {{ icon('radio', 'w-5 h-5') }}<span class="status-dot" data-status-dot data-state="unknown" aria-hidden="true"></span>
+    </button>
+    <button class="btn-plain btn-icon" data-immersive-toggle title="Immersive / VR mode" aria-label="Immersive / VR mode" aria-pressed="false">{{ icon('vr', 'w-5 h-5') }}</button>
+    <button class="btn-plain btn-icon" data-theme-toggle title="Toggle dark mode" aria-label="Toggle dark mode">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </header>
+  <div class="mt-5 grid md:grid-cols-[200px_1fr] gap-5">
+    <nav class="glass rounded-3xl p-2 h-max md:sticky md:top-6 flex md:flex-col gap-1 overflow-x-auto" id="settings-nav">
+      {% for id, label in [("profile","Profile"),("business","Business"),("providers","AI providers"),("smtp","E-mail (SMTP)"),("github","GitHub"),("memory","Global memory"),("restore","Restore points"),("danger","Danger zone"),("about","About")] %}
+      <a href="#{{ id }}" class="btn-plain justify-start no-underline" data-nav="{{ id }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div id="settings-root" class="space-y-5">
+      <div class="panel p-6 text-sm text-slate-500">Loading settings&hellip;</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ nonce }}" src="/static/vendor/socket.io.min.js"></script>
+<script type="module" nonce="{{ nonce }}" src="/static/js/settings.js?v={{ ASSET_VERSION }}"></script>
+{% endblock %}

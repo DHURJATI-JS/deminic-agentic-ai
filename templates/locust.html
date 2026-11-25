@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Stress-test results &middot; Deminic{% endblock %}
+{% block body %}
+{% set active = "locust" %}{% include "partials/navbar.html" %}
+<main class="max-w-6xl mx-auto px-4 pt-8 space-y-5">
+  {% if not report %}
+  <div class="panel p-10 text-center">
+    <h1 class="text-2xl font-semibold">No stress-test report yet</h1>
+    <p class="mt-2 text-slate-500">Run <code class="kbd">python stress/run_stress.py</code> to generate one.</p>
+  </div>
+  {% else %}
+  <section class="panel p-6">
+    <div class="flex flex-wrap items-end gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold">Stress test &amp; bug hunt</h1>
+        <p class="text-sm text-slate-500">Generated {{ report.generated_at }} &middot; {{ report.config.users }} simulated users &middot; {{ report.config.duration }} &middot; AI via {{ report.config.ai }}</p>
+      </div>
+      <span class="ml-auto {{ 'badge-green' if report.verdict == 'PASS' else 'badge-red' }} !h-7 !px-3 !text-xs">{{ report.verdict }}</span>
+    </div>
+    <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+      {% for label, value, sub in [
+        ("Requests", report.totals.requests, "total"),
+        ("Failure rate", "%.2f%%"|format(report.totals.failure_pct), report.totals.failures ~ " failures"),
+        ("Median latency", report.totals.p50_ms ~ " ms", "p95 " ~ report.totals.p95_ms ~ " ms"),
+        ("Throughput", "%.1f"|format(report.totals.rps) ~ " req/s", "peak users " ~ report.config.users),
+        ("AI accuracy", "%.0f%%"|format(report.ai_eval.accuracy_pct), report.ai_eval.passed ~ "/" ~ report.ai_eval.total ~ " checks"),
+        ("Cross-account leaks", report.isolation.leaks, report.isolation.probes ~ " isolation probes"),
+        ("Functional tests", report.tests.passed ~ "/" ~ report.tests.total, "pytest bug hunt"),
+        ("AI replies", report.ai_load.replies, "p50 " ~ report.ai_load.p50_s ~ " s"),
+      ] %}
+      <div class="card">
+        <div class="text-[11px] uppercase tracking-wide text-slate-500">{{ label }}</div>
+        <div class="mt-1 text-2xl font-semibold">{{ value }}</div>
+        <div class="text-xs text-slate-500">{{ sub }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="panel p-6 overflow-x-auto">
+    <h2 class="font-semibold mb-3">Per-endpoint results</h2>
+    <table class="table-glass">
+      <thead><tr><th>Endpoint</th><th>Requests</th><th>Failures</th><th>Median</th><th>p95</th><th>p99</th><th>Max</th></tr></thead>
+      <tbody>
+        {% for e in report.endpoints %}
+        <tr><td class="font-mono text-xs">{{ e.name }}</td><td>{{ e.requests }}</td><td>{{ e.failures }}</td><td>{{ e.p50_ms }} ms</td><td>{{ e.p95_ms }} ms</td><td>{{ e.p99_ms }} ms</td><td>{{ e.max_ms }} ms</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <section class="grid md:grid-cols-2 gap-5">
+    <div class="panel p-6">
+      <h2 class="font-semibold mb-3">AI functioning checks</h2>
+      <ul class="space-y-1.5 text-sm">
+        {% for c in report.ai_eval.cases %}
+        <li class="flex gap-2"><span class="{{ 'text-emerald-500' if c.ok else 'text-rose-500' }}">{{ '&#10003;'|safe if c.ok else '&#10007;'|safe }}</span><span>{{ c.name }}</span>{% if not c.ok and c.note %}<span class="text-xs text-slate-500">&mdash; {{ c.note }}</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="panel p-6">
+      <h2 class="font-semibold mb-3">Tenant isolation &amp; security probes</h2>
+      <ul class="space-y-1.5 text-sm">
+        {% for c in report.isolation.cases %}
+        <li class="flex gap-2"><span class="{{ 'text-emerald-500' if c.ok else 'text-rose-500' }}">{{ '&#10003;'|safe if c.ok else '&#10007;'|safe }}</span><span>{{ c.name }}</span></li>
+        {% endfor %}
+      </ul>
+      {% if report.notes %}<h3 class="font-semibold mt-5 mb-2">Notes</h3><ul class="list-disc pl-5 text-sm text-slate-600 dark:text-slate-300 space-y-1">{% for n in report.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}
+{% block scripts %}<script type="module" nonce="{{ nonce }}" src="/static/js/public.js?v={{ ASSET_VERSION }}"></script>{% endblock %}

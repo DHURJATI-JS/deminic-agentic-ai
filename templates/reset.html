@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Choose a new password &middot; Deminic{% endblock %}
+{% block body %}
+{% set active = "login" %}{% include "partials/navbar.html" %}
+<main class="min-h-[calc(100vh-11rem)] flex items-center justify-center px-4 pt-8">
+  <div class="panel w-full max-w-md p-7">
+    <a href="/"><img src="/static/img/logo.svg" alt="Deminic" class="w-12 h-12"></a>
+    <h1 class="mt-4 text-2xl font-semibold">Choose a new password</h1>
+    <form id="reset-form" class="mt-6 space-y-4" novalidate>
+      <input type="hidden" id="token" value="{{ token }}">
+      <div><label class="label" for="password">New password</label><input class="input" id="password" type="password" autocomplete="new-password" required minlength="8"></div>
+      <div><label class="label" for="password2">Repeat password</label><input class="input" id="password2" type="password" autocomplete="new-password" required minlength="8"></div>
+      <p id="reset-msg" class="text-sm hidden"></p>
+      <button class="btn-primary w-full btn-lg" type="submit">Save password</button>
+    </form>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}<script type="module" nonce="{{ nonce }}" src="/static/js/auth.js?v={{ ASSET_VERSION }}"></script>{% endblock %}

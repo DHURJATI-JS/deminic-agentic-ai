@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Deminic &mdash; your private agentic AI{% endblock %}
+{% block body %}
+{% set active = "home" %}{% include "partials/navbar.html" %}
+<main class="px-4">
+  <section class="max-w-6xl mx-auto pt-16 pb-12 text-center">
+    <div class="inline-flex items-center gap-2 chip mb-6">
+      <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Runs on your own hardware &middot; multi-user &middot; LAN &amp; VR ready
+    </div>
+    <h1 class="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
+      Your private, agentic AI<br>
+      <span class="bg-gradient-to-r from-sky-500 via-accent-500 to-fuchsia-500 bg-clip-text text-transparent">for life, business &amp; code.</span>
+    </h1>
+    <p class="mt-6 text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+      Deminic plans your day, guards your memories, runs your business desk and writes code that is scanned before it
+      ever touches disk &mdash; on a local Gemma/Qwen gateway, with Claude, ChatGPT or GitHub Models only when a task is
+      <em>beyond its limits</em>.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3 justify-center">
+      {% if user %}
+      <a href="/app" class="btn-primary btn-lg no-underline">Continue as {{ user.name }}</a>
+      {% else %}
+      <a href="/register" class="btn-primary btn-lg no-underline">Get started &mdash; it's local</a>
+      <a href="/login" class="btn-ghost btn-lg no-underline">I already have an account</a>
+      {% endif %}
+      <button class="btn-ghost btn-lg" data-immersive-toggle>{{ icon('vr', 'w-5 h-5') }}<span data-immersive-label>Enter immersive mode</span></button>
+    </div>
+  </section>
+
+  {% if demo_clips %}
+  <section id="demo" class="max-w-5xl mx-auto py-8 scroll-mt-24">
+    <div class="text-center mb-6">
+      <span class="chip !h-7">{{ icon('play', 'w-3.5 h-3.5 text-accent-500') }}Real recordings &middot; nothing mocked</span>
+      <h2 class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">See it in action</h2>
+      <p class="mt-2 text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+        Every clip is the running app answering with its local model. The captions were written by
+        Gemma&nbsp;3 running locally, from frames of each recording.
+      </p>
+    </div>
+    <div class="panel p-3 md:p-4">
+      <div class="flex justify-center">
+        <div class="seg demo-tabs" role="tablist" aria-label="Demo videos">
+          {% for c in demo_clips %}
+          <button class="seg-item {{ 'active' if loop.first }}" role="tab" aria-selected="{{ 'true' if loop.first else 'false' }}"
+                  data-demo="{{ c.key }}" data-src="/static/video/{{ c.key }}.mp4" data-poster="/static/video/{{ c.key }}.webp"
+                  data-caption="{{ c.caption }}">{{ icon(c.icon, 'w-4 h-4') }}{{ c.title }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      {% set first = demo_clips[0] %}
+      <div class="demo-stage mt-3">
+        <video id="demo-video" src="/static/video/{{ first.key }}.mp4" poster="/static/video/{{ first.key }}.webp"
+               muted playsinline preload="metadata" aria-label="Demo recording of Deminic"></video>
+        <button type="button" class="demo-toggle" id="demo-toggle" aria-label="Play">{{ icon('play', 'w-6 h-6') }}</button>
+        <div class="demo-progress" aria-hidden="true"><span id="demo-progress"></span></div>
+      </div>
+      <p class="demo-caption">
+        <span class="chip !h-6 shrink-0">{{ icon('sparkles', 'w-3.5 h-3.5 text-accent-500') }}AI caption</span>
+        <i id="demo-caption" aria-live="polite">{{ first.caption }}</i>
+      </p>
+    </div>
+  </section>
+  {% endif %}
+
+  <section id="skills" class="max-w-6xl mx-auto py-10">
+    <h2 class="text-2xl font-semibold mb-6">What {% if user %}{{ user.ai_name }}{% else %}Deminic{% endif %} can do</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% set skills = [
+        ("calendar", "Calendar & day-to-day tasks", "Create tasks with the place they were created, reminders you can cancel up to 3 minutes before, same-name tasks queued until the previous one is done, and Google Calendar links. Needs a Google Meet? It asks you to create one and paste it, then adds it."),
+        ("scale", "Lawyer mode", "Reconstructs your whole dispute - family, business or any other - and drafts sharp, critical, logical questions to ask at trial. Hands over to Claude / ChatGPT when it is beyond its limits."),
+        ("users", "Family profiles & e-mail", "Creates profiles for family members, stores contacts in encrypted global memory and e-mails them over your own SMTP when you say so."),
+        ("globe", "Reads websites", "Give it a link - it fetches the page safely (SSRF-guarded, injection-filtered) and pulls out exactly the details you asked for."),
+        ("cloud-sun", "Weather & travel guide", "Live forecasts, and when you arrive somewhere it recommends local dishes and places and can turn them into tasks."),
+        ("film", "Movies & music", "Recommends films, plays them from YouTube or tells you where to stream them (Netflix, Prime Video...). Say 'play some synthwave' and music starts alongside."),
+        ("briefcase", "Business desk", "Clients with the chat they came from, payment reminders that vanish with the client, credit/debit statements, cold sales e-mails, daily market news, opportunities and what-if simulations."),
+        ("sparkles", "AI summaries & mind maps", "Business health from what you tell it ('running low', 'got funding...'), and a private personal mind map of your challenges and goals."),
+        ("code", "Coding studio", "Built-in editor with undo/redo and SVG preview. Every change is scanned with OSV.dev and ClamAV before it is written, plus Locust stress tests and GitHub branches."),
+      ] %}
+      {% for ic, title, text in skills %}
+      <article class="panel card-hover p-5 animate-fade-up">
+        <span class="icon-badge">{{ icon(ic, "w-5 h-5") }}</span>
+        <h3 class="mt-3 font-semibold">{{ title }}</h3>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{{ text }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section id="modes" class="max-w-6xl mx-auto py-10 grid md:grid-cols-3 gap-4">
+    {% for title, color, items in [
+      ("Personal", "from-sky-400 to-accent-500", ["Tasks, calendar, reminders", "Family, contacts & e-mail", "Health & finance memory (encrypted)", "Weather, guide, movies, music", "Mind-map summary"]),
+      ("Business", "from-amber-400 to-rose-500", ["Clients & payment reminders", "Credit / debit statements", "Cold sales e-mails (sent inbox)", "Daily world & market news", "What-if simulations"]),
+      ("Coding", "from-emerald-400 to-teal-500", ["Qwen / online models only", "Editor with syntax colours", "OSV.dev gate before every write", "Locust stress-testing", "GitHub: new branches only"]),
+    ] %}
+    <div class="panel p-6">
+      <div class="h-1.5 w-16 rounded-full bg-gradient-to-r {{ color }}"></div>
+      <h3 class="mt-4 text-xl font-semibold">{{ title }} mode</h3>
+      <ul class="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+        {% for i in items %}<li class="flex gap-2"><span class="text-emerald-500">&#10003;</span>{{ i }}</li>{% endfor %}
+      </ul>
+      <p class="mt-4 text-xs text-slate-500">Separate chat history and global memory per mode.</p>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section id="immersive" class="max-w-6xl mx-auto py-10 scroll-mt-24">
+    <div class="panel p-6 md:p-10 relative overflow-hidden">
+      <div class="immersive-glow" aria-hidden="true"></div>
+      <div class="relative grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-10 items-center">
+        <div>
+          <span class="chip !h-7">{{ icon('vr', 'w-4 h-4 text-accent-500') }}Immersive &middot; VR mode</span>
+          <h2 class="mt-4 text-3xl md:text-4xl font-semibold tracking-tight leading-tight">Step inside your AI.</h2>
+          <p class="mt-3 text-slate-600 dark:text-slate-300 leading-relaxed">
+            Turn on immersive mode and the whole interface floats over a living, realistic sky. It's built for the
+            Meta Quest&nbsp;3 browser and looks just as good on a laptop, tablet or phone. The glass panels stay
+            readable while the world moves gently behind them.
+          </p>
+          <ul class="mt-5 space-y-3 text-sm">
+            {% for ic, t, d in [
+              ("moon", "Night", "a twinkling starry sky, a glowing moon, a soft nebula and the odd shooting star (dark mode)"),
+              ("sun", "Day", "a sky that follows the time of day, with drifting clouds, rolling hills and flocks of birds (light mode)"),
+              ("target", "Depth", "the scene moves with your mouse, finger or Quest controller (parallax)"),
+              ("eye", "Comfort", "bigger text and touch targets switch on automatically on a Meta Quest"),
+              ("zap", "Light on power", "pauses in background tabs and respects reduced-motion settings"),
+            ] %}
+            <li class="flex gap-3"><span class="icon-badge-soft shrink-0">{{ icon(ic, 'w-4 h-4') }}</span>
+              <span class="pt-1 text-slate-600 dark:text-slate-300"><b class="text-slate-900 dark:text-white">{{ t }}:</b> {{ d }}</span></li>
+            {% endfor %}
+          </ul>
+          <div class="mt-7 flex flex-wrap gap-3">
+            <button class="btn-primary btn-lg" data-immersive-toggle>{{ icon('vr', 'w-5 h-5') }}<span data-immersive-label>Enter immersive mode</span></button>
+            <button class="btn-ghost btn-lg" data-try-scene="night">{{ icon('moon', 'w-5 h-5') }}Night sky</button>
+            <button class="btn-ghost btn-lg" data-try-scene="day">{{ icon('sun', 'w-5 h-5') }}Daytime sky</button>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">Works whether you're signed in or not. Your choice is remembered for this device.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 lg:gap-4">
+          <figure class="scene-tile col-span-2">
+            <img src="/static/img/showcase/immersive-night.webp" alt="Deminic in immersive mode at night: glass panels over a starry sky with a moon" loading="lazy" decoding="async" width="1280" height="800">
+            <figcaption>{{ icon('moon', 'w-3.5 h-3.5') }}Night &middot; dark mode</figcaption>
+          </figure>
+          <figure class="scene-tile">
+            <img src="/static/img/showcase/immersive-day.webp" alt="Deminic in immersive mode by day: glass panels over a sky with clouds, hills and birds" loading="lazy" decoding="async" width="1280" height="800">
+            <figcaption>{{ icon('sun', 'w-3.5 h-3.5') }}Day &middot; light mode</figcaption>
+          </figure>
+          <figure class="scene-tile">
+            <img src="/static/img/showcase/immersive-quest.webp" alt="The comfort layout used on a Meta Quest 3: larger text and controls over the night sky" loading="lazy" decoding="async" width="1280" height="800">
+            <figcaption>{{ icon('vr', 'w-3.5 h-3.5') }}Quest 3 comfort layout</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="security" class="max-w-6xl mx-auto py-10">
+    <div class="panel p-6 md:p-8 grid md:grid-cols-2 gap-6">
+      <div>
+        <h2 class="text-2xl font-semibold">Private by design</h2>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Accounts are fully isolated. Chat histories, health and financial data are encrypted at rest. A Sentinel AI
+          guard filters prompt injection and blocks any other account's data from appearing in a reply.
+        </p>
+      </div>
+      <ul class="grid grid-cols-2 gap-2 text-sm">
+        {% for t in ["CSP with per-request nonce", "Signed double-submit CSRF", "Idempotent double-submit guard", "Rate limiting", "ClamAV upload scanning", "Argon2id passwords", "SSRF-safe fetching", "Restore points for protected tasks"] %}
+        <li class="glass-soft rounded-xl px-3 py-2">{{ t }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}
+<script type="module" nonce="{{ nonce }}" src="/static/js/public.js?v={{ ASSET_VERSION }}"></script>
+{% endblock %}

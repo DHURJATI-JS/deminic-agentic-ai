@@ -1,0 +1,33 @@
+{# Shared top navigation (home, auth pages, disclaimer, stress-test results).
+   Set `active` to: home | login | register | locust | disclaimer | technical #}
+{% set active = active | default('home') %}
+<header class="sticky top-0 z-30 px-4 pt-4">
+  <nav class="glass rounded-full max-w-6xl mx-auto h-14 px-3 pl-4 flex items-center gap-2 sm:gap-3" aria-label="Main">
+    <a href="/" class="flex items-center gap-2 no-underline text-slate-900 dark:text-white font-semibold shrink-0">
+      <img src="/static/img/logo.svg" alt="" class="w-8 h-8"> <span class="hidden sm:inline">Deminic</span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 ml-3 text-sm">
+      <a href="/#skills" class="btn-plain btn-sm no-underline">Skills</a>
+      <a href="/#modes" class="btn-plain btn-sm no-underline">Modes</a>
+      <a href="/#immersive" class="btn-plain btn-sm no-underline">VR mode</a>
+      <a href="/#security" class="btn-plain btn-sm no-underline">Security</a>
+      <a href="/technical" class="btn-plain btn-sm no-underline {% if active == 'technical' %}bg-slate-900/[0.06] dark:bg-white/[0.08]{% endif %}" {% if active == 'technical' %}aria-current="page"{% endif %}>How it works</a>
+      <a href="/locust" class="btn-plain btn-sm no-underline {% if active == 'locust' %}bg-slate-900/[0.06] dark:bg-white/[0.08]{% endif %}">Stress-test results</a>
+    </div>
+    <div class="ml-auto flex items-center gap-1 sm:gap-1.5">
+      <button class="btn-plain btn-icon relative" data-status-open title="System status" aria-label="System status">
+        {{ icon('radio', 'w-5 h-5') }}<span class="status-dot" data-status-dot data-state="unknown" aria-hidden="true"></span>
+      </button>
+      <button class="btn-plain btn-icon" data-immersive-toggle title="Immersive / VR mode" aria-label="Immersive / VR mode" aria-pressed="false">{{ icon('vr', 'w-5 h-5') }}</button>
+      <button class="btn-plain btn-icon" data-theme-toggle title="Toggle dark mode" aria-label="Toggle dark mode">
+        <span class="dark:hidden">{{ icon('moon', 'w-5 h-5') }}</span><span class="hidden dark:inline">{{ icon('sun', 'w-5 h-5') }}</span>
+      </button>
+      {% if user %}
+      <a href="/app" class="btn-primary no-underline max-w-[42vw] sm:max-w-none"><span class="truncate">Open {{ user.ai_name }}</span></a>
+      {% else %}
+      <a href="/login" class="{{ 'btn-primary' if active == 'login' else 'btn-ghost' }} no-underline whitespace-nowrap" {% if active == 'login' %}aria-current="page"{% endif %}>Sign in</a>
+      <a href="/register" class="{{ 'btn-primary' if active == 'register' else ('btn-ghost' if active == 'login' else 'btn-primary') }} no-underline whitespace-nowrap" {% if active == 'register' %}aria-current="page"{% endif %}><span class="sm:hidden">Sign up</span><span class="hidden sm:inline">Create account</span></a>
+      {% endif %}
+    </div>
+  </nav>
+</header>

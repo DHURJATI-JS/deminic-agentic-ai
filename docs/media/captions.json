@@ -1,0 +1,27 @@
+{
+  "hero": {
+    "caption": "The interface transitions from a dark, immersive night sky to a bright daytime vista, then showcases the virtual reality mode experience.",
+    "model": "gemma",
+    "frames": 3
+  },
+  "chat": {
+    "caption": "The AI assistant plans a Saturday, automatically generating calendar events and a task with a reminder based on a user's request.",
+    "model": "gemma",
+    "frames": 3
+  },
+  "business": {
+    "caption": "A request to add a client with an outstanding balance automatically generates a new client record and a payment reminder within the system.",
+    "model": "gemma",
+    "frames": 3
+  },
+  "coding": {
+    "caption": "The coding studio scans Python dependencies for vulnerabilities, reports findings, and then opens a code editor for remediation.",
+    "model": "gemma",
+    "frames": 3
+  },
+  "status": {
+    "caption": "The app continuously monitors all components, displaying real-time status and latency, while confirming AI responses from local models.",
+    "model": "gemma",
+    "frames": 3
+  }
+}

@@ -1,0 +1,15 @@
+# Normalise text files in the repository; keep each script in its platform's line endings.
+* text=auto
+*.sh   text eol=lf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Media and binaries - never diffed or line-ending converted
+*.mp4   binary
+*.webm  binary
+*.gif   binary
+*.webp  binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff2 binary

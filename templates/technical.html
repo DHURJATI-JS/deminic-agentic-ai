@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}How Deminic works &middot; Technical overview{% endblock %}
+{% block body %}
+{% set active = "technical" %}{% include "partials/navbar.html" %}
+<main class="max-w-6xl mx-auto px-4 pt-8 pb-6">
+  <section class="panel p-7 md:p-10 animate-fade-up">
+    <div class="flex flex-wrap items-center gap-4">
+      <span class="icon-badge !w-14 !h-14 !rounded-[18px]">{{ icon('layers', 'w-7 h-7') }}</span>
+      <div>
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight">How <span class="gradient-text">Deminic</span> works</h1>
+        <p class="mt-1 text-slate-600 dark:text-slate-300">A technical tour of the private, self-hosted agentic AI &mdash; from one chat message to the database, the AI models and back.</p>
+      </div>
+    </div>
+    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+      {% for ic, k, v in [("cpu","Local AI","Gemma via your gateway, Qwen for code, Docker fallbacks"), ("database","Data","PostgreSQL + pgvector, Redis"), ("shield-check","Security","CSP nonce, CSRF, Sentinel, ClamAV, encryption"), ("activity","Runtime","FastAPI + Socket.IO, background jobs with restore points")] %}
+      <div class="card flex gap-3"><span class="icon-badge-soft">{{ icon(ic, 'w-4 h-4') }}</span><div><div class="font-semibold">{{ k }}</div><div class="text-slate-500 text-xs mt-0.5">{{ v }}</div></div></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="mt-6 grid lg:grid-cols-[230px_1fr] gap-6">
+    <nav class="hidden lg:block sticky top-24 h-max panel p-3 text-sm" aria-label="Contents">
+      {% for id, label in [("architecture","Architecture"),("journey","A message's journey"),("routing","Vector routing"),("failsafe","AI failsafe & escalation"),("memory","Memory & chat history"),("encryption","Encryption at rest"),("jobs","Background tasks & restore points"),("security","Security layers"),("sections","The three modes"),("coding","Coding gate"),("ui","Interface & immersive mode"),("deploy","Deployment & LAN"),("testing","Testing & stress results"),("limits","Known limits")] %}
+      <a href="#{{ id }}" class="nav-item !py-1.5 text-[13px]">{{ label }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="space-y-6 min-w-0">
+      <!-- ============================================================ architecture -->
+      <section id="architecture" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('layers', 'w-5 h-5 text-accent-500') }}Architecture</h2>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Everything runs on your own machine. The browser talks to one Python process (FastAPI + Socket.IO); heavy lifting is delegated to services in Docker and to your AI gateway.</p>
+        <div class="mt-5 overflow-x-auto">
+          <svg viewBox="0 0 980 470" class="w-full min-w-[760px]" role="img" aria-label="Architecture diagram" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#2f9bff"/><stop offset="1" stop-color="#8e5cf0"/></linearGradient>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker>
+            </defs>
+            <!-- browser -->
+            <rect class="arch-box" x="20" y="185" width="170" height="100" rx="18"/>
+            <text class="arch-t" x="105" y="220" text-anchor="middle">Browser / Quest 3</text>
+            <text class="arch-s" x="105" y="240" text-anchor="middle">Tailwind glass UI</text>
+            <text class="arch-s" x="105" y="256" text-anchor="middle">Socket.IO client</text>
+            <text class="arch-s" x="105" y="272" text-anchor="middle">Web Speech (mic)</text>
+            <!-- app -->
+            <rect x="260" y="40" width="330" height="390" rx="24" fill="url(#g1)" opacity=".12"/>
+            <rect class="arch-box" x="260" y="40" width="330" height="390" rx="24" fill-opacity="0"/>
+            <text class="arch-t" x="425" y="68" text-anchor="middle">Deminic app (FastAPI + Socket.IO)</text>
+            {% for y, a, b in [(88,"Security middleware","CSP nonce · CSRF · one-login token · idempotency"),(150,"Routers","auth · chats · settings · personal · business · coding"),(212,"Agent","embed → vector routing → tools → stream → Sentinel"),(274,"AI failsafe","gateway → Docker models → online escalation"),(336,"Job manager","background tasks · restore points · watchdog")] %}
+            <rect class="arch-box" x="282" y="{{ y }}" width="286" height="50" rx="14"/>
+            <text class="arch-t" x="298" y="{{ y + 21 }}">{{ a }}</text><text class="arch-s" x="298" y="{{ y + 38 }}">{{ b }}</text>
+            {% endfor %}
+            <!-- services -->
+            {% for y, a, b in [(40,"PostgreSQL + pgvector","24 tables · encrypted fields · vectors"),(112,"Redis","sessions · UI state · logs · idempotency"),(184,"ClamAV","scans uploads, avatars, cloned repos"),(256,"Ollama (Docker)","all-minilm embeddings · gemma3 · qwen2.5-coder"),(328,"Your AI gateway","gemma / qwen · OpenAI-compatible API"),(400,"Online (optional)","Claude · ChatGPT · GitHub Models")] %}
+            <rect class="arch-box" x="680" y="{{ y }}" width="280" height="56" rx="14"/>
+            <text class="arch-t" x="698" y="{{ y + 24 }}">{{ a }}</text><text class="arch-s" x="698" y="{{ y + 42 }}">{{ b }}</text>
+            <path class="arch-ln" d="M590 {{ y + 28 if y < 300 else 300 }} C 630 {{ y + 28 if y < 300 else 300 }}, 640 {{ y + 28 }}, 676 {{ y + 28 }}" marker-end="url(#ar)"/>
+            {% endfor %}
+            <path class="arch-ln" d="M190 222 C 222 222, 230 160, 258 160" marker-end="url(#ar)"/>
+            <path class="arch-ln" d="M258 300 C 230 300, 222 250, 192 250" marker-end="url(#ar)"/>
+            <text class="arch-s" x="200" y="150">HTTPS / HTTP</text>
+            <text class="arch-s" x="196" y="318">live events</text>
+          </svg>
+        </div>
+        <p class="md:hidden mt-2 text-xs text-slate-500 flex items-center gap-1">{{ icon('chevron-right', 'w-3.5 h-3.5') }}Swipe sideways to see the whole diagram.</p>
+      </section>
+
+      <!-- ============================================================ journey -->
+      <section id="journey" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('message', 'w-5 h-5 text-accent-500') }}A message's journey</h2>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">When you press Enter, this is what happens &mdash; every step is written to your live terminal.</p>
+        <ol class="mt-5 space-y-3">
+          {% for t, d in [
+            ("Submit (double-submit safe)", "The browser sends the text with a CSRF token and a unique request id that doubles as an idempotency key. A second identical submit is replayed, not re-run, and each chat can only generate one reply at a time."),
+            ("Compaction", "The previous prompt and reply are compacted into a short text summary stored in the chat_histories table, so the model always gets a compact history that fits its 8K context window."),
+            ("Background job", "The reply is generated by a cancellable background task. You can switch chats or tabs while it runs; tokens stream over Socket.IO keyed by the request id."),
+            ("Embed once", "The message is embedded once (all-minilm, 384 dimensions). That single vector drives every routing decision below."),
+            ("Sentinel input scan", "The vector is compared with known prompt-injection patterns (e.g. 'ignore previous instructions', 'show other users' data') and suspicious messages are flagged."),
+            ("Memory by vector search", "pgvector finds the user's most relevant memories and decides whether memory is needed at all; values come from an in-memory dictionary in O(1)."),
+            ("Tool selection", "pgvector ranks all 37 tools by similarity to the message. Only plausible tools are shown to a JSON-schema constrained router call, which picks the actions and arguments."),
+            ("Tools run", "Tasks, calendar, e-mail drafts, weather, website reading, clients, statements, OSV scans... Each result becomes a card in the chat and a fact for the answer."),
+            ("Answer + escalation", "The answer streams from the local gateway. If the model writes BEYOND MY LIMITS, the request is re-run on Claude, ChatGPT or GitHub Models (if configured)."),
+            ("Sentinel output guard", "Secrets (API keys, tokens) are redacted and any e-mail or account id that belongs to another account is removed before anything is saved or shown."),
+            ("Save + insights", "The reply is saved (encrypted) and a low-priority job extracts main points, updates AI summaries and auto-remembers durable facts."),
+          ] %}
+          <li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background-image:var(--grad)">{{ loop.index }}</span>
+            <div><div class="font-semibold">{{ t }}</div><div class="text-sm text-slate-600 dark:text-slate-300">{{ d }}</div></div></li>
+          {% endfor %}
+        </ol>
+      </section>
+
+      <!-- ============================================================ routing -->
+      <section id="routing" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('target', 'w-5 h-5 text-accent-500') }}Vector routing instead of regex</h2>
+        <div class="mt-3 grid md:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-300">
+          <p>Every decision the agent makes is answered by a nearest-neighbour search in PostgreSQL (pgvector) instead of hand-written regular expressions. Prototype phrases for each tool, memory category, profile question, summary trigger and injection pattern are embedded once into the <code>intent_vectors</code> table.</p>
+          <p>At request time the message vector is compared against those prototypes; similarity above a tuned threshold activates the intent. If no tool is close enough the router is skipped entirely, which keeps plain conversation fast. Regex is only used where an exact syntax must be matched (URLs, e-mail addresses, <code>chat#N</code> references, API-key formats).</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ failsafe -->
+      <section id="failsafe" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('zap', 'w-5 h-5 text-accent-500') }}AI failsafe &amp; escalation</h2>
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+          {% for s in ["Your gateway (gemma)", "Gateway via loopback", "Docker fallback (gemma3 / qwen-coder)", "Online provider (last resort)", "Cancel (truly last resort)"] %}
+          <span class="chip !h-8 !px-3">{{ s }}</span>{% if not loop.last %}{{ icon('chevron-right', 'w-4 h-4 text-slate-400') }}{% endif %}
+          {% endfor %}
+        </div>
+        <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+          <li>Failed calls are retried with backoff; a provider that refuses connections is skipped for a short time by a circuit breaker.</li>
+          <li>If a provider dies mid-answer, the next provider restarts the answer and the UI resets the partial text.</li>
+          <li>Coding mode never uses Gemma: it uses a Qwen model on your gateway if served, then the Docker Qwen fallback, then online models.</li>
+          <li>The strict <code>BEYOND MY LIMITS</code> rule is in every local prompt; the phrase is detected while streaming (the first characters are held back) and triggers the escalation function.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ memory -->
+      <section id="memory" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('brain', 'w-5 h-5 text-accent-500') }}Memory &amp; chat history</h2>
+        <div class="mt-3 grid md:grid-cols-3 gap-3 text-sm">
+          <div class="card"><div class="font-semibold">chat_histories</div><p class="mt-1 text-slate-500">One row per chat: a JSONB MutableList of <code>{chatno, prompt, reply, ...}</code> dicts plus the compacted-history text column.</p></div>
+          <div class="card"><div class="font-semibold">memories + memory_vectors</div><p class="mt-1 text-slate-500">Global memory per mode (personal, business, coding). Family contacts are memories too. Each entry has a vector for semantic recall.</p></div>
+          <div class="card"><div class="font-semibold">Wiping memory</div><p class="mt-1 text-slate-500">A protected background task: memories removed, tasks/reminders kept but marked stale and removed from the vector store.</p></div>
+        </div>
+        <ul class="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+          <li><b>Standing instructions.</b> Rules like "stop reassuring me" or "reply in bullet points" are saved as category <code>instruction</code> and added to <i>every</i> reply in that mode, not only when they seem relevant.</li>
+          <li><b>Typo-proof save requests.</b> "save thios to my global emmeory" is recognised by combining the message embedding with a character-trigram embedding. The remember tool is then put in front of the router.</li>
+          <li><b>No false claims.</b> Each reply is checked sentence by sentence (vector similarity) for claims like "I've added that to your memory". If nothing was saved, Deminic performs the save, or corrects the reply.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ encryption -->
+      <section id="encryption" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('lock', 'w-5 h-5 text-accent-500') }}Encryption at rest</h2>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Sensitive columns use transparent SQLAlchemy types backed by Fernet (AES-128-CBC + HMAC-SHA256). The database only ever stores <code>enc:...</code> tokens; the key lives in <code>.env</code>.</p>
+        <div class="mt-4 overflow-x-auto"><table class="table-glass">
+          <thead><tr><th>Data</th><th>How it is stored</th></tr></thead>
+          <tbody>
+            <tr><td>Chat histories</td><td>prompt / reply / cards / location / attachments encrypted per message; compacted history, titles and main points encrypted</td></tr>
+            <tr><td>Health &amp; financial memory</td><td>key, value and details encrypted; uniqueness via a keyed HMAC; the vector embeds only category + label, never the value</td></tr>
+            <tr><td>Statements, reminders, summaries, simulations, e-mails</td><td>amounts, counterparties, descriptions, bodies and results encrypted</td></tr>
+            <tr><td>Passwords</td><td>Argon2id (OWASP parameters) &mdash; never reversible</td></tr>
+            <tr><td>API keys, SMTP key, GitHub token</td><td>Fernet-encrypted, shown masked in settings</td></tr>
+            <tr><td>Login token</td><td>only its SHA-256 hash is stored (users.session_token_hash)</td></tr>
+          </tbody></table></div>
+      </section>
+
+      <!-- ============================================================ jobs -->
+      <section id="jobs" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('history', 'w-5 h-5 text-accent-500') }}Background tasks &amp; restore points</h2>
+        <div class="mt-3 grid md:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-300">
+          <div class="card"><div class="font-semibold text-slate-900 dark:text-white">Cancellable tasks</div>
+            <p class="mt-1">Replies, scans, Locust runs, clones, news digests, reminders. Cancels travel over Socket.IO with the exact request id and are only accepted from the owner. Reminders can be cancelled until 3 minutes before they are due.</p></div>
+          <div class="card"><div class="font-semibold text-slate-900 dark:text-white">Protected tasks (like a Windows restore point)</div>
+            <p class="mt-1">Memory deletion, global reset and multi-file code applies open a restore point first and record an undo step before every change. If they fail, are interrupted or the app closes, the undo log is replayed back to that timestamp &mdash; verified by killing the server mid-wipe.</p></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ security -->
+      <section id="security" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('shield-check', 'w-5 h-5 text-accent-500') }}Security layers</h2>
+        <div class="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
+          {% for t, d in [
+            ("CSP with per-request nonce", "Only scripts carrying this response's random nonce run; no inline handlers, no third-party scripts."),
+            ("Signed double-submit CSRF", "Every write echoes a cookie token whose HMAC is bound to your session; a planted cookie is useless."),
+            ("Idempotency keys", "Duplicate submissions are blocked while running and replayed afterwards."),
+            ("One login per account", "Each login stores a token hash in the database; middleware rejects every older session and disconnects its sockets."),
+            ("Rate limits + brute-force throttle", "Per-IP limits plus a per-account lock after 10 failed sign-ins in 5 minutes."),
+            ("Sentinel AI guard", "Semantic prompt-injection detection, secret redaction and cross-account leak blocking on every reply."),
+            ("Tenant isolation", "Every query is scoped to your account; tested with 835 cross-account probes and 0 leaks."),
+            ("ClamAV + re-encoding", "Uploads, avatars, attachments and cloned repos are virus-scanned; images are re-encoded to strip metadata."),
+            ("SSRF guard", "Website reading refuses private, loopback and cloud-metadata addresses and re-checks every redirect."),
+            ("GitHub safety", "The GitHub client can only read and create new branches - never delete, modify or force-push."),
+          ] %}
+          <div class="card"><div class="font-semibold">{{ t }}</div><div class="text-slate-500 mt-0.5">{{ d }}</div></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- ============================================================ sections -->
+      <section id="sections" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('briefcase', 'w-5 h-5 text-accent-500') }}The three modes</h2>
+        <div class="mt-4 grid md:grid-cols-3 gap-3 text-sm">
+          <div class="card"><div class="font-semibold flex items-center gap-2">{{ icon('user', 'w-4 h-4') }}Personal</div><p class="mt-1 text-slate-500">Tasks with location, a same-name processing queue, reminders, calendar with Google Calendar links and Meet hand-off, family profiles and e-mail, weather, travel guide, movies (YouTube or where to stream) and music, mind-map summary.</p></div>
+          <div class="card"><div class="font-semibold flex items-center gap-2">{{ icon('briefcase', 'w-4 h-4') }}Business</div><p class="mt-1 text-slate-500">Clients remember the chat and reason they were added; removing a client removes its reminders. Credit/debit statements, cold sales e-mails in the sent inbox, a daily news digest with opportunities, what-if simulations and a business AI summary. The business name is a live <code>{business_name}</code> variable.</p></div>
+          <div class="card"><div class="font-semibold flex items-center gap-2">{{ icon('code', 'w-4 h-4') }}Coding</div><p class="mt-1 text-slate-500">A per-chat project plus the unified workspace, an editor with syntax colours and auto-closing brackets, the vulnerability gate, a scanner, Locust stress tests and GitHub.</p></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ coding gate -->
+      <section id="coding" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('shield', 'w-5 h-5 text-accent-500') }}The coding gate</h2>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Nothing is written to disk until it passes. On every save (or AI change): new dependencies are extracted from manifests and import statements, unpinned ones are resolved to their latest version, and all of them are checked against OSV.dev. The content is also scanned by ClamAV and for leaked secrets. A vulnerable package blocks the write and the gate recommends the first fixed version or a safer alternative; multi-file changes roll back completely if any file is blocked.</p>
+      </section>
+
+      <!-- ============================================================ ui -->
+      <section id="ui" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('sparkles', 'w-5 h-5 text-accent-500') }}Interface &amp; immersive mode</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+          <li>Liquid-glass design system (Tailwind) with dark/light themes, one consistent icon set and smooth React-like transitions (View Transitions API with a CSS fallback).</li>
+          <li><b>Immersive / VR mode</b> renders a realistic animated environment on a canvas behind the glass: a starry night with nebula, moon and shooting stars in dark mode; a time-of-day sky with sun, drifting clouds, hills and flocks of birds in light mode. Parallax follows your pointer or Quest controller; on a Meta Quest it switches on with a larger comfort layout.</li>
+          <li>Command palette (Ctrl+K) and an in-app terminal with Tab completion, history and AI-suggested commands (type <code>?</code> plus what you want).</li>
+          <li><b>System status</b> (the signal button next to the theme toggle) pings every component every 2 seconds: gateway and model loaded, coding model, Docker fallbacks, embeddings, PostgreSQL, Redis, ClamAV and the live socket. Each row shows its latency and a history graph. A real AI response test asks the local models to reply "pong" and times the first token.</li>
+          <li>A gradient navigation bar sweeps across the top of the page on every page change, chat switch and tab switch.</li>
+          <li>No browser storage: saved accounts, theme and UI state live in Redis.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ deploy -->
+      <section id="deploy" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('rocket', 'w-5 h-5 text-accent-500') }}Deployment &amp; LAN access</h2>
+        <div class="mt-3 grid md:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-300">
+          <p><b>One-click:</b> <code>install.bat</code> / <code>./install.sh</code> create <code>.env</code> with fresh secrets, install Python 3.12 via uv, start PostgreSQL (pgvector), Redis, ClamAV and Ollama in Docker and download the fallback models. <code>run.bat</code> / <code>./run.sh</code> start everything and open the browser. Add <code>-Docker</code> / <code>--docker</code> to run the app itself in a container.</p>
+          <p><b>Every device:</b> the app listens on HTTP <code>:8700</code> and HTTPS <code>:8743</code>. A local certificate authority is generated so phones, laptops and the Quest 3 can use the HTTPS address (needed for the microphone and location) &mdash; install <a href="/ca.crt">/ca.crt</a> once per device. Windows needs ports 8700/8743 allowed in the firewall (the installer asks once).</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ testing -->
+      <section id="testing" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('gauge', 'w-5 h-5 text-accent-500') }}Testing &amp; stress results</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+          <li>An automated pytest bug hunt covering security, isolation, restore points, all three modes, single-login and an N+1 query audit.</li>
+          <li>An AI evaluation that drives real chats through your gateway and checks outcomes (database rows, cards, replies) &mdash; 27 of 27 passed.</li>
+          <li>A Locust load test with concurrent accounts that chat with the AI while probing each other's data &mdash; 0 cross-account leaks.</li>
+          <li>A process-level crash test: the server is killed in the middle of a protected memory wipe and must restore everything on restart.</li>
+        </ul>
+        <a href="/locust" class="btn-primary mt-5 no-underline">{{ icon('gauge', 'w-4 h-4') }}See the latest stress-test report</a>
+      </section>
+
+      <!-- ============================================================ limits -->
+      <section id="limits" class="panel p-6 md:p-8 scroll-mt-24">
+        <h2 class="text-2xl font-semibold flex items-center gap-2">{{ icon('alert', 'w-5 h-5 text-amber-500') }}Known limits</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300 list-disc pl-5">
+          <li>Google Calendar entries are added through Google's template link and an .ics file (no OAuth), and Google Meet links must be created by you.</li>
+          <li>Immersive mode decorates the 2D browser window; it is not a full WebXR room.</li>
+          <li>Without a YouTube or TMDB key, video lookup uses YouTube's public search page and streaming availability falls back to search links.</li>
+          <li>The local 12B model answers most things; truly expert work escalates only when an online provider key is configured.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}<script type="module" nonce="{{ nonce }}" src="/static/js/public.js?v={{ ASSET_VERSION }}"></script>{% endblock %}

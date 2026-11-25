@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Create your account &middot; Deminic{% endblock %}
+{% block body %}
+{% set active = "register" %}{% include "partials/navbar.html" %}
+<main class="min-h-[calc(100vh-11rem)] flex items-center justify-center px-4 pt-8">
+  <div class="panel w-full max-w-2xl p-6 md:p-8">
+    <div class="flex items-center gap-3">
+      <a href="/"><img src="/static/img/logo.svg" alt="Deminic" class="w-11 h-11"></a>
+      <div>
+        <h1 class="text-xl font-semibold">Set up your private AI</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">First-time setup &middot; everything stays on your server</p>
+      </div>
+      <a href="/login" class="ml-auto text-sm">Sign in instead</a>
+    </div>
+
+    <ol id="steps" class="mt-6 grid grid-cols-5 gap-1.5" aria-label="Setup steps">
+      {% for s in ["Account", "Your AI", "Business", "AI providers", "E-mail"] %}
+      <li class="step text-center" data-step="{{ loop.index0 }}">
+        <div class="h-1.5 rounded-full bg-slate-900/10 dark:bg-white/10 overflow-hidden"><div class="h-full w-0 bg-accent-500 transition-all"></div></div>
+        <span class="mt-1.5 block text-[11px] font-medium text-slate-500">{{ s }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+
+    <form id="register-form" class="mt-6" novalidate enctype="multipart/form-data">
+      <!-- Step 1: account -->
+      <section class="wizard-step space-y-4" data-step="0">
+        <div class="flex items-center gap-4">
+          <label class="relative cursor-pointer group" title="Upload a profile photo">
+            <img id="avatar-preview" src="/static/img/avatar.svg" alt="Profile photo" class="w-20 h-20 rounded-full object-cover ring-4 ring-white/70 dark:ring-white/10 bg-slate-200 dark:bg-slate-700">
+            <span class="absolute inset-0 rounded-full bg-black/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">Change</span>
+            <input type="file" name="avatar" id="avatar" accept="image/png,image/jpeg,image/webp,image/gif" class="sr-only">
+          </label>
+          <div class="text-sm text-slate-500 dark:text-slate-400">Profile photo (optional). It is virus-scanned and re-encoded; your AI can look at it when you ask.</div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><label class="label" for="name">Your name</label><input class="input" id="name" name="name" autocomplete="name" required maxlength="80" placeholder="e.g. Dhurjati Sharma"><p class="error-text hidden" data-err="name"></p></div>
+          <div><label class="label" for="username">Username <span class="font-normal">(different from your name)</span></label><input class="input" id="username" name="username" autocomplete="username" required maxlength="32" placeholder="e.g. dhurjati_js"><p class="hint" id="username-hint">a-z, 0-9, . _ -</p><p class="error-text hidden" data-err="username"></p></div>
+        </div>
+        <div><label class="label" for="email">E-mail <span class="font-normal">(required &middot; password-reset links go here)</span></label><input class="input" id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"><p class="error-text hidden" data-err="email"></p></div>
+        <div><label class="label" for="password">Password</label><input class="input" id="password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"><p class="hint">8+ characters with upper- and lower-case letters and a number.</p><p class="error-text hidden" data-err="password"></p></div>
+      </section>
+
+      <!-- Step 2: AI -->
+      <section class="wizard-step space-y-4 hidden" data-step="1">
+        <div><label class="label" for="ai_name">What should your AI be called?</label><input class="input" id="ai_name" name="ai_name" value="Deminic" maxlength="40"><p class="hint">Default is Deminic - you can rename it any time.</p></div>
+        <div><label class="label" for="about">Tell it about yourself</label><textarea class="textarea" id="about" name="about" rows="5" maxlength="4000" placeholder="What you do, your routine, what you'd like help with..."></textarea></div>
+        <input type="hidden" name="timezone" id="timezone" value="UTC">
+      </section>
+
+      <!-- Step 3: business -->
+      <section class="wizard-step space-y-4 hidden" data-step="2">
+        <label class="flex items-center gap-3 card cursor-pointer">
+          <input type="checkbox" id="owns_business" name="owns_business" value="true" class="w-4 h-4">
+          <span><span class="font-medium">I own a business</span><br><span class="text-xs text-slate-500">Leave unticked if you don't own one yet - you can add it later.</span></span>
+        </label>
+        <div id="biz-fields" class="space-y-4 opacity-50 pointer-events-none transition">
+          <div><label class="label" for="business_name">Business name</label><input class="input" id="business_name" name="business_name" maxlength="120"></div>
+          <div><label class="label" for="business_description">What does your business do?</label><textarea class="textarea" id="business_description" name="business_description" rows="4" maxlength="4000" placeholder="Products, customers, market, stage..."></textarea></div>
+        </div>
+      </section>
+
+      <!-- Step 4: providers -->
+      <section class="wizard-step space-y-4 hidden" data-step="3">
+        <div class="card text-sm">
+          <b>Local AI gateway</b> (OpenAI-compatible). Gemma answers chats; Qwen is used for coding. If the gateway is
+          down, the dockerised fallback models take over automatically.
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><label class="label" for="gateway_url">Gateway base URL</label><input class="input" id="gateway_url" name="gateway_url" value="{{ default_gateway_url }}"></div>
+          <div><label class="label" for="gateway_key">Gateway key</label><input class="input" id="gateway_key" name="gateway_key" type="password" value="{{ default_gateway_key }}" autocomplete="off"></div>
+          <div><label class="label" for="local_model">Chat model</label><input class="input" id="local_model" name="local_model" value="{{ default_local_model }}"></div>
+          <div><label class="label" for="coder_model">Coding model (Qwen)</label><input class="input" id="coder_model" name="coder_model" value="{{ default_coder_model }}"></div>
+        </div>
+        <div class="card text-sm"><b>Online providers</b> &mdash; optional. Used when the local model says it is <i>beyond its limits</i>, for coding if you choose, and as a last-resort failover. Keys are encrypted at rest.</div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div><label class="label" for="claude_key">Claude API key</label><input class="input" id="claude_key" name="claude_key" type="password" autocomplete="off" placeholder="sk-ant-..."></div>
+          <div><label class="label" for="openai_key">ChatGPT (OpenAI) key</label><input class="input" id="openai_key" name="openai_key" type="password" autocomplete="off" placeholder="sk-..."></div>
+          <div><label class="label" for="github_models_key">GitHub Models / Copilot token</label><input class="input" id="github_models_key" name="github_models_key" type="password" autocomplete="off" placeholder="github_pat_..."></div>
+        </div>
+      </section>
+
+      <!-- Step 5: SMTP -->
+      <section class="wizard-step space-y-4 hidden" data-step="4">
+        <div class="card text-sm">Your AI sends e-mails (family, cold sales mails, password resets) through <b>your</b> mailbox. You can skip this and add it later in Settings.</div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2"><label class="label" for="smtp_host">SMTP server</label><input class="input" id="smtp_host" name="smtp_host" placeholder="smtp.gmail.com"></div>
+          <div><label class="label" for="smtp_port">Port</label><input class="input" id="smtp_port" name="smtp_port" type="number" value="587"></div>
+          <div><label class="label" for="smtp_security">Security</label><select class="select" id="smtp_security" name="smtp_security"><option value="starttls">STARTTLS (587)</option><option value="ssl">SSL/TLS (465)</option><option value="none">None</option></select></div>
+          <div><label class="label" for="smtp_username">SMTP username</label><input class="input" id="smtp_username" name="smtp_username" autocomplete="off"></div>
+          <div><label class="label" for="smtp_password">SMTP key / app password</label><input class="input" id="smtp_password" name="smtp_password" type="password" autocomplete="off"></div>
+        </div>
+        <div><label class="label" for="smtp_from_email">Preferred e-mail to send from</label><input class="input" id="smtp_from_email" name="smtp_from_email" type="email" placeholder="you@example.com"></div>
+      </section>
+
+      <p id="register-error" class="error-text hidden mt-4"></p>
+      <div class="mt-6 flex items-center gap-2">
+        <button type="button" id="prev" class="btn-ghost hidden">Back</button>
+        <span class="ml-auto"></span>
+        <button type="button" id="next" class="btn-primary">Continue</button>
+        <button type="submit" id="submit" class="btn-primary hidden">Create account</button>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script type="module" nonce="{{ nonce }}" src="/static/js/auth.js?v={{ ASSET_VERSION }}"></script>
+{% endblock %}

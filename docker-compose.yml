@@ -1,0 +1,112 @@
+# Deminic Agentic AI - infrastructure + optional full-stack app container.
+#   Infra only (native app run):   docker compose up -d db redis clamav ollama ollama-pull
+#   Everything in Docker:          docker compose --profile full up -d --build
+name: deminic
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: deminic
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD missing - run the installer first}
+      POSTGRES_DB: deminic
+    ports:
+      - "127.0.0.1:${DB_PORT:-5445}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deminic -d deminic"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD missing - run the installer first}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6385}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  clamav:
+    # Apple Silicon / ARM: the installer sets CLAMAV_IMAGE=clamav/clamav-debian:1.4 (multi-arch)
+    image: ${CLAMAV_IMAGE:-clamav/clamav:1.4}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${CLAMAV_PORT:-3311}:3310"
+    volumes:
+      - clamdb:/var/lib/clamav
+
+  # Local fallback LLMs (used automatically when the AI gateway is unreachable).
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_KEEP_ALIVE: "30m"
+      OLLAMA_NUM_PARALLEL: "2"
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT:-11435}:11434"
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  # One-shot job that downloads the embedding model (pgvector semantic search) and the
+  # fallback LLMs (gemma for chat, qwen-coder for coding).
+  ollama-pull:
+    image: ollama/ollama:latest
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${EMBED_MODEL:-all-minilm} && ollama pull ${FALLBACK_CHAT_MODEL:-gemma3:4b} && ollama pull ${FALLBACK_CODER_MODEL:-qwen2.5-coder:3b} && echo FALLBACK_MODELS_READY"]
+
+  app:
+    profiles: ["full"]
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://deminic:${DB_PASSWORD}@db:5432/deminic
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
+      OLLAMA_URL: http://ollama:11434/v1
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8700"
+      EXTRA_CERT_HOSTS: ${EXTRA_CERT_HOSTS:-}
+    ports:
+      - "${APP_BIND:-0.0.0.0}:${APP_PORT:-8700}:8700"
+      - "${APP_BIND:-0.0.0.0}:${HTTPS_PORT:-8743}:8743"
+    volumes:
+      - appdata:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clamav:
+        condition: service_started
+      ollama:
+        condition: service_started
+
+volumes:
+  pgdata:
+  redisdata:
+  clamdb:
+  ollama:
+  appdata:

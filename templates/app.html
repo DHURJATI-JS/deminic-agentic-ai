@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ user.ai_name }} &middot; Deminic{% endblock %}
+{% block body_class %}overflow-hidden{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/vendor/codemirror/codemirror.min.css">
+<link rel="stylesheet" href="/static/vendor/codemirror/addon/foldgutter.min.css">
+{% endblock %}
+{% block body %}
+<div id="app" class="h-[100dvh] flex" data-ai-name="{{ user.ai_name }}">
+  <!-- ============================================================ sidebar -->
+  <aside id="sidebar" class="glass-strong fixed md:static inset-y-3 left-3 z-40 w-[296px] md:m-3 md:mr-0 rounded-[28px] flex flex-col -translate-x-[110%] md:translate-x-0 transition-transform duration-300">
+    <div class="p-4 pb-3 flex items-center gap-3">
+      <a href="/" class="ai-avatar block !w-10 !h-10 !rounded-[13px]" title="Home page" aria-label="Home page"><img src="/static/img/logo.svg" alt="" class="!rounded-[11px]"></a>
+      <div class="min-w-0">
+        <div class="font-semibold leading-tight truncate tracking-tight" id="ai-name">{{ user.ai_name }}</div>
+        <div class="text-[11px] text-slate-500 truncate flex items-center gap-1.5"><span class="live-dot bg-emerald-500" id="ai-live"></span><span id="ai-status">private agentic AI</span></div>
+      </div>
+      <a href="/" id="go-home" class="ml-auto btn-plain btn-icon no-underline" title="Home page" aria-label="Home page">{{ icon('home', 'w-[18px] h-[18px]') }}</a>
+      <button class="btn-plain btn-icon md:hidden" data-close-sidebar aria-label="Close sidebar">{{ icon('x', 'w-5 h-5') }}</button>
+    </div>
+    <div class="px-3">
+      <div class="seg has-indicator w-full grid grid-cols-3" id="section-switch" role="tablist" aria-label="Sections">
+        <span class="tab-indicator" aria-hidden="true"></span>
+        <button class="seg-item justify-center" data-section="personal" role="tab">{{ icon('user', 'w-3.5 h-3.5') }}Personal</button>
+        <button class="seg-item justify-center" data-section="business" role="tab">{{ icon('briefcase', 'w-3.5 h-3.5') }}Business</button>
+        <button class="seg-item justify-center" data-section="coding" role="tab">{{ icon('code', 'w-3.5 h-3.5') }}Coding</button>
+      </div>
+    </div>
+    <div class="px-3 pt-3">
+      <button id="new-chat" class="btn-primary w-full !h-10" title="New chat (N)">{{ icon('plus', 'w-4 h-4') }}New chat</button>
+    </div>
+    <div class="px-3 pt-3 relative">
+      <span class="absolute left-6 top-1/2 translate-y-[calc(-50%+6px)] text-slate-400 pointer-events-none">{{ icon('search', 'w-4 h-4') }}</span>
+      <input id="chat-search" class="input !h-9 !pl-9" placeholder="Search chats" aria-label="Search chats">
+    </div>
+    <div class="px-5 pt-4 pb-1 text-[10.5px] uppercase tracking-[.08em] font-semibold text-slate-400 flex items-center gap-2">Recent chats<span class="ml-auto chip !h-5" id="chat-count">0</span></div>
+    <nav id="chat-list" class="flex-1 overflow-y-auto scroll-thin px-2 pb-2 space-y-0.5" aria-label="Chats"></nav>
+    <div class="p-3 divider flex items-center gap-2.5">
+      <span class="avatar-ring shrink-0"><img src="{{ user.avatar_url or '/static/img/avatar.svg' }}" alt="" id="me-avatar" class="w-9 h-9 object-cover bg-slate-200 dark:bg-slate-700"></span>
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-semibold truncate" id="me-name">{{ user.name }}</div>
+        <div class="text-[11px] text-slate-500 truncate">@{{ user.username }}</div>
+      </div>
+      <a href="/technical" class="btn-plain btn-icon no-underline" title="How it works" aria-label="How it works">{{ icon('layers', 'w-[18px] h-[18px]') }}</a>
+      <a href="/settings" class="btn-plain btn-icon no-underline" title="Settings" aria-label="Settings">{{ icon('settings', 'w-[18px] h-[18px]') }}</a>
+      <button class="btn-plain btn-icon" id="logout" title="Sign out" aria-label="Sign out">{{ icon('log-out', 'w-[18px] h-[18px]') }}</button>
+    </div>
+  </aside>
+  <div id="sidebar-scrim" class="fixed inset-0 z-30 bg-black/20 hidden md:hidden" data-close-sidebar></div>
+
+  <!-- ============================================================ main -->
+  <main class="flex-1 min-w-0 flex flex-col p-3 gap-3">
+    <header class="glass rounded-[22px] h-14 px-2 flex items-center gap-2 shrink-0">
+      <button class="btn-plain btn-icon md:hidden" id="open-sidebar" aria-label="Open sidebar">{{ icon('menu', 'w-5 h-5') }}</button>
+      <div id="tabs" class="seg has-indicator overflow-x-auto scroll-thin max-w-full" role="tablist" aria-label="Tabs"><span class="tab-indicator" aria-hidden="true"></span></div>
+      <span class="flex-1"></span>
+      <button id="open-palette" class="btn-ghost !font-normal !px-2.5 2xl:!pl-3 2xl:!pr-2 text-slate-500 dark:text-slate-400" title="Command palette (Ctrl+K)" aria-label="Command palette">
+        {{ icon('search', 'w-4 h-4') }}<span class="hidden 2xl:inline mr-4">Search or jump to&hellip;</span><span class="kbd hidden xl:inline-flex">Ctrl K</span>
+      </button>
+      <span id="conn" class="hidden sm:inline-flex chip !h-7 !px-2.5" title="Live connection"><span class="live-dot bg-slate-400" id="conn-dot"></span><span id="conn-text" class="hidden 2xl:inline">connecting</span></span>
+      {# phones: immersive, terminal and theme live in the command palette (search button) to keep the bar uncluttered #}
+      <button class="btn-plain btn-icon hidden sm:inline-flex" id="toggle-immersive" title="Immersive / VR mode" aria-label="Immersive mode">{{ icon('vr', 'w-5 h-5') }}</button>
+      <button class="btn-plain btn-icon relative" id="open-jobs" title="Background tasks" aria-label="Background tasks">
+        {{ icon('activity', 'w-5 h-5') }}
+        <span id="jobs-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold items-center justify-center" style="background-image:var(--grad)">0</span>
+      </button>
+      <button class="btn-plain btn-icon hidden sm:inline-flex" id="toggle-terminal" title="Terminal (Ctrl+`)" aria-label="Terminal">{{ icon('terminal', 'w-5 h-5') }}</button>
+      <button class="btn-plain btn-icon relative" data-status-open title="System status" aria-label="System status">
+        {{ icon('radio', 'w-5 h-5') }}<span class="status-dot" data-status-dot data-state="unknown" aria-hidden="true"></span>
+      </button>
+      <button class="btn-plain btn-icon hidden sm:inline-flex" data-theme-toggle title="Toggle dark mode" aria-label="Toggle dark mode">
+        <span class="dark:hidden">{{ icon('moon', 'w-5 h-5') }}</span><span class="hidden dark:inline">{{ icon('sun', 'w-5 h-5') }}</span>
+      </button>
+    </header>
+    <section id="view" class="flex-1 min-h-0 panel overflow-hidden relative" aria-live="polite"></section>
+    <div class="shrink-0 flex items-center justify-center">{% include "partials/disclaimer_tag.html" %}</div>
+  </main>
+
+  <!-- ============================================================ background tasks drawer -->
+  <aside id="jobs-drawer" class="glass-strong fixed top-3 bottom-3 right-3 z-50 w-[min(430px,calc(100vw-24px))] rounded-[28px] flex flex-col translate-x-[110%] transition-transform duration-300" aria-label="Background tasks">
+    <div class="p-4 pb-3 flex items-center gap-3">
+      <span class="icon-badge !w-9 !h-9 !rounded-xl">{{ icon('activity', 'w-4 h-4') }}</span>
+      <div><h2 class="font-semibold leading-tight">Background tasks</h2><div class="text-[11px] text-slate-500" id="jobs-count">0 running</div></div>
+      <button class="ml-auto btn-plain btn-icon" id="close-jobs" aria-label="Close">{{ icon('x', 'w-5 h-5') }}</button>
+    </div>
+    <p class="px-4 pb-2 text-[11px] text-slate-500">Cancels travel over Socket.IO with the exact request id. Protected tasks can't be cancelled &mdash; they roll back to their restore point if interrupted.</p>
+    <div id="jobs-list" class="flex-1 overflow-y-auto scroll-thin p-3 space-y-2"></div>
+  </aside>
+
+  <!-- ============================================================ terminal -->
+  <div id="terminal" class="fixed left-3 right-3 bottom-3 z-40 rounded-[22px] overflow-hidden hidden" style="box-shadow:0 30px 80px -20px rgba(0,0,0,.65)">
+    <div class="terminal flex flex-col h-[40vh] relative">
+      <div class="flex items-center gap-2 px-3 h-10 shrink-0 border-b border-white/5" style="background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))">
+        <span class="w-3 h-3 rounded-full bg-[#ff5f57]"></span><span class="w-3 h-3 rounded-full bg-[#febc2e]"></span><span class="w-3 h-3 rounded-full bg-[#28c840]"></span>
+        <span class="ml-2 text-xs text-slate-300 flex items-center gap-1.5">{{ icon('terminal', 'w-3.5 h-3.5') }}deminic &mdash; live logs <span class="text-slate-500">(only your account)</span></span>
+        <div class="ml-auto flex items-center gap-1">
+          <input id="term-filter" class="h-7 w-44 rounded-lg bg-white/[0.07] px-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500/60" placeholder="filter logs">
+          <button id="term-clear" class="text-xs px-2 h-7 rounded-lg text-slate-300 hover:bg-white/10">clear</button>
+          <button id="term-close" class="w-7 h-7 rounded-lg text-slate-300 hover:bg-white/10 inline-flex items-center justify-center" aria-label="Close terminal">{{ icon('x', 'w-4 h-4') }}</button>
+        </div>
+      </div>
+      <div id="term-out" class="flex-1 overflow-y-auto scroll-thin px-3 py-2 whitespace-pre-wrap"></div>
+      <div id="term-suggest" class="term-suggest hidden" role="listbox"></div>
+      <form id="term-form" class="flex items-center gap-2 px-3 h-10 shrink-0 border-t border-white/5 bg-white/[0.03]">
+        <span class="text-sky-300 font-semibold">&rsaquo;</span>
+        <div class="relative flex-1">
+          <input id="term-input" class="w-full bg-transparent text-slate-100 text-xs focus:outline-none relative z-[1]" placeholder="type a command (Tab = autocomplete, ? = ask AI)" autocomplete="off" spellcheck="false">
+          <span id="term-ghost" class="absolute inset-0 text-xs text-slate-500 pointer-events-none whitespace-pre" aria-hidden="true"></span>
+        </div>
+        <span class="text-[10px] text-slate-500 hidden sm:inline">Tab &middot; &uarr;&darr; history &middot; ?ask AI</span>
+      </form>
+    </div>
+  </div>
+
+  <div id="player" class="hidden fixed z-40 right-4 bottom-16 w-[min(380px,calc(100vw-32px))] glass-strong rounded-[26px] p-3"></div>
+  <div id="modal-root"></div>
+  <div id="cmdk-root"></div>
+</div>
+{% endblock %}
+{% block footer %}{% endblock %}
+{% block scripts %}
+<script nonce="{{ nonce }}" src="/static/vendor/marked.min.js"></script>
+<script nonce="{{ nonce }}" src="/static/vendor/purify.min.js"></script>
+<script nonce="{{ nonce }}" src="/static/vendor/socket.io.min.js"></script>
+<script nonce="{{ nonce }}" src="/static/vendor/codemirror/codemirror.min.js"></script>
+{% for a in ["simple", "overlay", "runmode", "closebrackets", "matchbrackets", "closetag", "active-line", "comment", "searchcursor", "foldcode", "foldgutter", "brace-fold", "indent-fold", "xml-fold", "placeholder"] %}
+<script nonce="{{ nonce }}" src="/static/vendor/codemirror/addon/{{ a }}.min.js"></script>
+{% endfor %}
+{% for m in ["xml", "javascript", "css", "htmlmixed", "python", "markdown", "clike", "shell", "yaml", "sql", "go", "rust", "php", "toml", "dockerfile", "ruby", "swift", "properties", "diff", "jsx"] %}
+<script nonce="{{ nonce }}" src="/static/vendor/codemirror/mode/{{ m }}.min.js"></script>
+{% endfor %}
+<script type="module" nonce="{{ nonce }}" src="/static/js/app.js?v={{ ASSET_VERSION }}"></script>
+{% endblock %}

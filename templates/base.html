@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" class="{% if theme == 'dark' %}dark{% endif %}{% if prefs and prefs.immersive %} immersive{% endif %}" data-theme="{{ theme or 'system' }}" data-immersive="{{ '1' if prefs and prefs.immersive else '0' }}" data-vr-comfort="{{ prefs.vr_comfort if prefs else '' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Deminic{% endblock %}</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Deminic - a private, self-hosted agentic AI for your personal life, business and code.">
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  {# vendor CSS first so the app theme (app.css) overrides it #}
+  {% block head %}{% endblock %}
+  <link rel="stylesheet" href="/static/css/app.css?v={{ ASSET_VERSION }}">
+  <script nonce="{{ nonce }}">
+    (function () {
+      var t = document.documentElement.dataset.theme;
+      var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.classList.toggle('dark', dark);
+    })();
+  </script>
+</head>
+<body class="wallpaper min-h-full {% block body_class %}{% endblock %}">
+  {% block body %}{% endblock %}
+  {% block footer %}
+  <footer class="px-4 pb-6 pt-10 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
+    {% include "partials/disclaimer_tag.html" %}
+    <div>
+      Contact the developer:
+      <a href="mailto:{{ DEVELOPER_EMAIL }}">{{ DEVELOPER_EMAIL }}</a> &middot;
+      <a href="{{ DEVELOPER_GITHUB }}" target="_blank" rel="noopener noreferrer">github.com/dhurjati-js</a>
+    </div>
+  </footer>
+  {% endblock %}
+  {# below the top bar so notifications never cover navigation #}
+  <div id="toasts" class="fixed top-[84px] right-4 left-4 sm:left-auto z-[60] flex flex-col gap-2 items-end pointer-events-none"></div>
+  {# One URL (no ?v=) so page modules that import these files share the same instance.
+     Static files are served with Cache-Control: no-cache, so they are always revalidated. #}
+  <script type="module" nonce="{{ nonce }}" src="/static/js/shell.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+# secrets / local config
+.env
+# runtime data (database lives in Docker volumes; this is workspaces, uploads, TLS keys, reports)
+data/
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# build tools (static/css/app.css is committed pre-built)
+tools/*.exe
+tools/tailwindcss*
+*.log
